@@ -48,7 +48,7 @@ export const createBlog = async (req, res) => {
 
 /**
  * Controller: Get all blog posts
- * Public — supports query params: ?published=true|false&tag=<tag>&category=design|our-mind|others&page=1&limit=10
+ * Public — supports query params: ?published=true|false&tag=<tag>&category=design|life|others&page=1&limit=10
  */
 export const getAllBlogs = async (req, res) => {
   try {

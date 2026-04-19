@@ -1,6 +1,7 @@
 export const BlogCategory = {
   DESIGN: "design",
-  OUR_MIND: "our-mind",
+  LIFE: "life",
+  PROJECTS: "projects",
   OTHERS: "others",
 };
 

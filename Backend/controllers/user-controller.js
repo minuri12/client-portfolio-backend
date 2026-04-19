@@ -10,7 +10,9 @@ import { validateUserRegistration, validateUserLogin } from "../validation/auth-
  */
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const name = req.body.name || req.body.username || req.body.fullName || req.body.full_name;
+    const email = req.body.email || req.body.userEmail || req.body.emailAddress;
+    const password = req.body.password;
 
     // Validate request body
     const errors = validateUserRegistration(req.body);
