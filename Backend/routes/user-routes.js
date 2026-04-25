@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllUsers, getUserById, getUserRole, registerUser, loginUser, refreshAccessToken } from "../controllers/user-controller.js";
+import { getAllUsers, getUserById, getUserRole, registerUser, loginUser, refreshAccessToken, logoutUser } from "../controllers/user-controller.js";
 import { authenticateToken } from "../middleware/verify-token.js";
 import { authorizeRoles } from "../middleware/role-authorize.js";
 import { verifyTokenNotBlacklisted } from "../middleware/check-black-list-token.js";
@@ -11,6 +11,14 @@ const router = express.Router();
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/refresh", refreshAccessToken);
+
+// Protected route — authentication required
+router.post(
+  "/logout",
+  verifyTokenNotBlacklisted,
+  authenticateToken,
+  logoutUser
+);
 
 router.get(
   "/",

@@ -59,13 +59,21 @@ export const registerUser = async (req, res) => {
       const hashedRefresh = await hashRefreshToken(refreshTokenPlain);
       newUser.refreshToken = hashedRefresh;
       await newUser.save();
+
+      // Set refresh token as HTTP-only cookie
+      res.cookie('refreshToken', refreshTokenPlain, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: '/',
+      });
     }
 
     // Return the new user without the password field
     const { password: _, refreshToken, ...userData } = newUser.toObject();
 
     const responsePayload = { user: userData, token: accessToken };
-    if (refreshTokenPlain) responsePayload.refreshToken = refreshTokenPlain;
 
     return sendSuccessResponse(res, 201, "User registered successfully.", responsePayload);
   } catch (error) {
@@ -118,12 +126,20 @@ export const loginUser = async (req, res) => {
       const hashedRefresh = await hashRefreshToken(refreshTokenPlain);
       user.refreshToken = hashedRefresh;
       await user.save();
+
+      // Set refresh token as HTTP-only cookie
+      res.cookie('refreshToken', refreshTokenPlain, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: '/',
+      });
     }
 
     const { password: _, refreshToken, ...userData } = user.toObject();
 
     const responsePayload = { user: userData, token: accessToken };
-    if (refreshTokenPlain) responsePayload.refreshToken = refreshTokenPlain;
 
     return sendSuccessResponse(res, 200, "Login successful.", responsePayload);
   } catch (error) {
@@ -327,5 +343,35 @@ export const getUserRole = async (req, res) => {
   } catch (error) {
     // Send generic server error response
     return sendErrorResponse(res, 500, "Internal Server Error");
+  }
+};
+
+/**
+ * Controller: Logout user
+ * Clears the refresh token cookie and sets user's refresh token to null
+ */
+export const logoutUser = async (req, res) => {
+  try {
+    // Clear the refresh token cookie
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+      path: '/',
+    });
+
+    // Get the user ID from the authenticated request
+    const { userId } = req.user;
+
+    // Find the user and clear their refresh token
+    const user = await User.findById(userId);
+    if (user) {
+      user.refreshToken = null;
+      await user.save();
+    }
+
+    return sendSuccessResponse(res, 200, "Logged out successfully.");
+  } catch (error) {
+    return sendErrorResponse(res, 500, "Internal Server Error", error);
   }
 };
