@@ -51,7 +51,7 @@ const app = express();
 
 // CORS Configuration for Vercel preview URLs
 const allowedOrigins = [
-  'https://client-portfolio-frontend.vercel.app',
+  'https://client-portfolio-frontend-5klu.vercel.app',  // ← stable URL
   /https:\/\/client-portfolio-frontend-.*\.vercel\.app$/,
   'http://localhost:3000',
   'http://localhost:3001',
