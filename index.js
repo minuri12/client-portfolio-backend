@@ -81,13 +81,20 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Database connection middleware for serverless
+// Database connection management for serverless (Vercel)
+const isConnected = () => {
+  return mongoose.connection.readyState === 1; // 1 = connected
+};
+
 app.use(async (req, res, next) => {
   try {
-    await connectDB();
+    if (!isConnected()) {
+      await connectDB();
+    }
     next();
   } catch (err) {
-    res.status(500).json({ error: 'Database connection failed' });
+    console.error('Database connection error:', err.message);
+    res.status(500).json({ error: 'Database connection failed', details: err.message });
   }
 });
 
