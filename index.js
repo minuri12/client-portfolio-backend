@@ -53,6 +53,7 @@ const app = express();
 const allowedOrigins = [
   'https://client-portfolio-frontend-5klu.vercel.app',  // ← stable URL
   /https:\/\/client-portfolio-frontend-.*\.vercel\.app$/,
+  /https:\/\/client-portfolio-dashbaord-.*\.vercel\.app$/,  // Dashboard URL
   'http://localhost:3000',
   'http://localhost:3001',
 ];
