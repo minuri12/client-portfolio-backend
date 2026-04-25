@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 
+let isConnected = false;
+
 // MongoDB connection configuration
 const options = {
     // Connection pool settings
@@ -15,8 +17,10 @@ const options = {
 };
 
 export const connectDB = async () => {
+    if (isConnected) return;
     try {
         const conn = await mongoose.connect(process.env.MONGO_URI, options);
+        isConnected = true;
         
         console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
         console.log(`📦 Database: ${conn.connection.name}`);
@@ -36,7 +40,7 @@ export const connectDB = async () => {
         
     } catch (err) {
         console.error('❌ MongoDB connection failed:', err.message);
-        process.exit(1);
+        throw err;
     }
 };
 

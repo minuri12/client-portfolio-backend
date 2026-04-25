@@ -2,15 +2,10 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import mongoose from 'mongoose';
 
 // Load environment variables
 dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // MongoDB connection
 const connectDB = async () => {
@@ -39,7 +34,7 @@ const connectDB = async () => {
     });
   } catch (err) {
     console.error('❌ MongoDB connection failed:', err.message);
-    process.exit(1);
+    throw err;
   }
 };
 
@@ -52,11 +47,7 @@ const disconnectDB = async () => {
   }
 };
 
-// Connect to MongoDB
-connectDB();
-
 const app = express();
-const PORT = process.env.PORT || 5001;
 
 // Middleware
 app.use(cors({ origin: process.env.CLIENT_URL ? [process.env.CLIENT_URL] : ['http://localhost:3000', 'http://localhost:3001'], credentials: true }));
@@ -64,8 +55,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Serve uploaded files as static assets
-app.use('/uploads', express.static(path.join(__dirname, 'Backend/uploads')));
+// Database connection middleware for serverless
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    res.status(500).json({ error: 'Database connection failed' });
+  }
+});
 
 // Root route
 app.get('/', (req, res) => {
@@ -100,28 +98,31 @@ app.use((req, res) => {
   });
 });
 
-// Start server for local development
-const server = app.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
-  console.log(`📍 Local: http://localhost:${PORT}`);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM signal received: closing HTTP server');
-  server.close(async () => {
-    await disconnectDB();
-    process.exit(0);
+// Start server for local development only
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 5001;
+  const server = app.listen(PORT, () => {
+    console.log(`🚀 Server is running on port ${PORT}`);
+    console.log(`📍 Local: http://localhost:${PORT}`);
   });
-});
 
-process.on('SIGINT', async () => {
-  console.log('\nSIGINT signal received: closing HTTP server');
-  server.close(async () => {
-    await disconnectDB();
-    process.exit(0);
+  // Graceful shutdown
+  process.on('SIGTERM', async () => {
+    console.log('SIGTERM signal received: closing HTTP server');
+    server.close(async () => {
+      await disconnectDB();
+      process.exit(0);
+    });
   });
-});
+
+  process.on('SIGINT', async () => {
+    console.log('\nSIGINT signal received: closing HTTP server');
+    server.close(async () => {
+      await disconnectDB();
+      process.exit(0);
+    });
+  });
+}
 
 // Export app for Vercel
 export default app;

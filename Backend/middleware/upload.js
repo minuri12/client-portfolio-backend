@@ -1,8 +1,6 @@
-import fs from "fs";
-import path from "path";
 import { sendErrorResponse } from "../utils/response-util.js";
+import { uploadToCloudinary } from "../config/cloudinary.js";
 
-const UPLOAD_DIR = "uploads/blogs";
 const MAX_BODY_BYTES = 10 * 1024 * 1024; // 10 MB overall body
 const MAX_FILE_BYTES = 5 * 1024 * 1024;  // 5 MB per file
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
@@ -13,10 +11,6 @@ const MIME_TO_EXT = {
   "image/webp": ".webp",
   "image/gif": ".gif",
 };
-
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-}
 
 /**
  * Parses a multipart/form-data request without any external dependencies.
@@ -57,7 +51,7 @@ export const parseMultipart = (req, res, next) => {
     }
   });
 
-  req.on("end", () => {
+  req.on("end", async () => {
     if (res.headersSent) return;
     try {
       const rawBody = Buffer.concat(chunks);
@@ -108,11 +102,8 @@ export const parseMultipart = (req, res, next) => {
             return sendErrorResponse(res, 400, "Image size exceeds the 5 MB limit.");
           }
 
-          const ext = MIME_TO_EXT[mime];
-          const savedFilename = `blog-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-          const filePath = path.join(UPLOAD_DIR, savedFilename).replace(/\\/g, "/");
-          fs.writeFileSync(filePath, bodySlice);
-          savedFile = { filename: savedFilename, path: filePath, url: `/${filePath}` };
+          const { url, public_id } = await uploadToCloudinary(bodySlice, mime);
+          savedFile = { url, public_id };
         } else {
           fields[fieldName] = bodySlice.toString();
         }
@@ -120,7 +111,7 @@ export const parseMultipart = (req, res, next) => {
 
       req.body = { ...req.body, ...fields };
       if (savedFile) req.savedFile = savedFile;
-      console.log("Multipart data parsed successfully:", { fields: Object.keys(fields), savedFile: savedFile ? savedFile.filename : null });
+      console.log("Multipart data parsed successfully:", { fields: Object.keys(fields), savedFile: savedFile ? savedFile.url : null });
       next();
     } catch (err) {
       return sendErrorResponse(res, 400, "Failed to parse request body.", err);
