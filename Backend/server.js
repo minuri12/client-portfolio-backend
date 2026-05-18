@@ -22,6 +22,7 @@ const PORT = process.env.PORT || 5001;
 // Middleware
 const allowedOrigins = [
   process.env.CLIENT_URL,
+  'https://minuri.pages.dev',
   /https:\/\/client-portfolio-dashbaord-.*\.vercel\.app$/,
   'http://localhost:3000',
   'http://localhost:3001',

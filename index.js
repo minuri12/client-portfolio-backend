@@ -52,6 +52,7 @@ const app = express();
 // CORS Configuration for Vercel preview URLs
 const allowedOrigins = [
   'https://www.minuri.me',  // ← stable URL
+  'https://minuri.pages.dev',
   /https:\/\/client-portfolio-frontend-.*\.vercel\.app$/,
   /https:\/\/client-portfolio-dashbaord-.*\.vercel\.app$/,  // Dashboard URL
   'http://localhost:3000',
